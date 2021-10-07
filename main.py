@@ -1,4 +1,4 @@
-name: Pylint
+name: Pylint //edited
 
 on: [push]
 
