@@ -48,7 +48,7 @@ class TF_Model:
                 dcode_type: str = types_Decoder.Best_path,
                 restore: bool = False,
                 dump: bool = False) -> None: 
-
+                                           
     #defines constructor and paramaters to be parsed into the various layers
     #constructor also initalize class self
         self.dump = dump
@@ -236,3 +236,106 @@ class TF_Model:
 
         return [''.join([self.clist[c] for c in labelStr]) for labelStr in label_strs]
  
+
+
+ #this function calculates and returns the loss value
+ def batch_trainer(self,batch: Batch)->float:
+     
+    maximum_text_length=batch.imgs[0].shape[0]//4
+    
+    sparse = self.to_sparse(batch.gttexts)
+
+    val_list = [self.optimizer, self.loss]
+
+    batch_element_number=len(batch.imgs)
+           
+     feed_dict = {self.input_images: batch.imgs, self.gttexts: sparse,
+                     self.seq_length: [maximum_text_length] * batch_element_number, self.train_status: True}
+
+    _, loss_value = self.sess.run(val_list, feed_dict)
+    self.batches_trained += 1
+    
+    return loss_value
+ 
+
+@staticmethod
+
+
+#generates a csv file and stores the contents of the Neural net 
+
+def Neural_net_dump_output(RNN_Out: np.ndarray) -> None:
+
+    dump_directory='../dump/'
+
+    if not os.path.isdir(dump_directory):
+        os.mkdir(dump_directory)
+    
+    max_t, max_b, max_c = RNN_Out.shape
+
+    b=0
+    while(b<=max_b)
+        csv=''
+        for t in range(max_t)
+            for c in range(max_c)
+                csv+=str(RNN_Out[t,b,c]+';')
+            csv += '\n'
+        fn = dump_directory + 'rnnOutput_' + str(b) + '.csv'
+        print('Write dump of NN to file: ' + fn)
+        with open(fn, 'w') as f:
+            f.write(csv)
+        b++
+
+    
+#input a batch to run through the nn for text recognition
+
+def batch_inference(self,batch:Batch,calc_probability:bool=False,probability_of_gt: bool = False):
+         
+
+num_batch = len(batch.imgs)
+
+eval_list=[]
+
+if self.dcode_type == types_Decorder.wordBsearch:
+
+    eval_list.append(self.wbs_input)
+    
+else:
+    eval_list.append(self.dcode_type)
+
+if self.dump or calc_probability:
+    eval_list.append(self.ctcin3D)
+    
+max_text_length = batch.imgs[0].shape[0] //4
+
+feed_dict={self.input_images: batch.imgs,self.sequence_len:[maximum_text_length]*batch_element_number,
+           self.train_status: False}
+
+evalulate_res = self.sess.run(eval_list, feed_dict)
+
+if self.dcode_type != types_Decoder.wordBsearch:
+      decoded = evalulate_res[0]
+
+else:
+    decoded=self.decoder.compute(eval_res[0])
+      
+texts = self.Decoder_txt_output(decoded, batch_element_number)
+
+probs=None
+
+if calc_probability:
+    sparse = self.sparse(batch.gt_texts) if gt_probability else self.sparse(texts)
+    ctc_input = evalulate_res[1]
+    eval_list = self.loss_per_element
+    
+    feed_dict={self.saved_ctc_input: ctc_input, self.gttexts:sparse,
+                self,seq_length:[maximum_text_length]*batch_element_number,self.train_status:False}
+    loss_values = self.sess.run(eval_list, feed_dict)
+    probs = np.exp(-loss_values)
+    
+
+#saves the model to a file
+def save(self) -> None:
+
+        self.Snap_ID_Num += 1
+
+        self.saver.save(self.sess, '../model/snapshot', global_step=self.Snap_ID_Num)
