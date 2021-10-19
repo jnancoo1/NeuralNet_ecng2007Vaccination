@@ -10,7 +10,6 @@ from kivy.uix.screenmanager import Screen, ScreenManager
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.button import MDFlatButton, MDRectangleFlatButton
 from kivy.uix.camera import Camera
-import mysql.connector
 import sqlite3
 
 ### Formating variables for database functions
