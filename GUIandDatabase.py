@@ -116,8 +116,6 @@ KV = '''
                     helper_text: "Day"
                     helper_text_mode: "persistent"
         
-                #Label:
-        
             BoxLayout:
                 orientation: "horizontal"
                 spacing: 7
@@ -198,7 +196,7 @@ KV = '''
                 right_action_items: [["chevron-right-box", lambda x: root.back_button("main_screen")]]
             Camera: 
                 id: camera_id
-                resolution: (720, 1280)
+                #resolution: (720, 1280)
                 play: True
             MDFloatingActionButton:
                 icon: "camera"
