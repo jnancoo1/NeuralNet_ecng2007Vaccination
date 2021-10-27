@@ -401,8 +401,10 @@ class MyLayout(ScreenManager):
             temp = False
         else:
             temp = True
-
-        if len(day) > 2 or len(month) > 2:
+            
+        if temp == False:
+            pass
+        elif len(day) > 2 or len(month) > 2:
             toast("Invalid Date Of Birth")
             self.ids.day.text = ""
             self.ids.month.text = ""
