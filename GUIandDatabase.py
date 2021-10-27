@@ -413,19 +413,19 @@ class MyLayout(ScreenManager):
         if temp == False:
             pass
         elif int(month)>12 or int(month)<1:
-            toast("Invalid Date of Birth, Invalid Month")
+            toast("Invalid Date of Birth")
             self.ids.month.text = ""
             temp = False
         elif (int(month)==1 or int(month)==3 or int(month)==5 or int(month)==7 or int(month)==8 or int(month)==10 or int(month)==12) and (int(day)<1 or int(day)>31):
-            toast("Invalid Date of Birth, Invalid Day")
+            toast("Invalid Date of Birth")
             self.ids.day.text = ""
             temp = False
         elif int(month)==2 and (int(day)<1 or int(day)>29):
-            toast("Invalid Date of Birth, Invalid Day")
+            toast("Invalid Date of Birth")
             self.ids.day.text = ""
             temp = False
         elif (int(month)==4 or int(month)==6 or int(month)==9 or int(month)==11) and (int(day)<1 or int(day)>30):
-            toast("Invalid Date of Birth, Invalid Day")
+            toast("Invalid Date of Birth")
             self.ids.day.text = ""
             temp = False
 
