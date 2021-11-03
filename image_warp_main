@@ -1,66 +1,104 @@
-while True:
 
-    if webCamFeed:
-        success, img = cap.read()
-    else:
-        img = cv2.imread(pathImage)
-    img = cv2.resize(img, (widthImg, heightImg))  # RESIZE IMAGE
-    imgBlank = np.zeros((heightImg, widthImg, 3), np.uint8)  # CREATE A BLANK IMAGE FOR TESTING DEBUGING IF REQUIRED
-    imgGray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)  # CONVERT IMAGE TO GRAY SCALE
-    imgBlur = cv2.GaussianBlur(imgGray, (5, 5), 1)  # ADD GAUSSIAN BLUR
-    thres = utlis.valTrackbars()  # GET TRACK BAR VALUES FOR THRESHOLDS
-    imgThreshold = cv2.Canny(imgBlur, thres[0], thres[1])  # APPLY CANNY BLUR
-    kernel = np.ones((5, 5))
-    imgDial = cv2.dilate(imgThreshold, kernel, iterations=2)  # APPLY DILATION
-    imgThreshold = cv2.erode(imgDial, kernel, iterations=1)  # APPLY EROSION
+def warpimage():
+    ########################################################################
+    ###webcamfeed to select whether input image/videofeed is from a still image or from a camera
+    webCamFeed = False
 
-    ## FIND ALL COUNTOURS
-    imgContours = img.copy()  # COPY IMAGE FOR DISPLAY PURPOSES
-    imgBigContour = img.copy()  # COPY IMAGE FOR DISPLAY PURPOSES
-    contours, hierarchy = cv2.findContours(imgThreshold, cv2.RETR_EXTERNAL,
-                                           cv2.CHAIN_APPROX_SIMPLE)  # FIND ALL CONTOURS
-    cv2.drawContours(imgContours, contours, -1, (0, 255, 0), 10)  # DRAW ALL DETECTED CONTOURS
+    ###pathImage is the path of the still image to be used if webCamFeed is set to False
+    pathImage = r"C:\Users\jnanc\Downloads\Vacc_Card.png"
 
-    # FIND THE BIGGEST COUNTOUR
-    biggest, maxArea = utlis.biggestContour(contours)  # FIND THE BIGGEST CONTOUR
-    if biggest.size != 0:
-        biggest = utlis.reorder(biggest)
-        cv2.drawContours(imgBigContour, biggest, -1, (0, 255, 0), 20)  # DRAW THE BIGGEST CONTOUR
-        imgBigContour = utlis.drawRectangle(imgBigContour, biggest, 2)
-        pts1 = np.float32(biggest)  # PREPARE POINTS FOR WARP
-        pts2 = np.float32([[0, 0], [widthImg, 0], [0, heightImg], [widthImg, heightImg]])  # PREPARE POINTS FOR WARP
-        matrix = cv2.getPerspectiveTransform(pts1, pts2)
-        imgWarpColored = cv2.warpPerspective(img, matrix, (widthImg, heightImg))
+    ###cap is live video feed from camera through cv2
+    cap = cv2.VideoCapture(0)
 
-        # REMOVE 20 PIXELS FORM EACH SIDE
-        imgWarpColored = imgWarpColored[20:imgWarpColored.shape[0] - 20, 20:imgWarpColored.shape[1] - 20]
-        imgWarpColored = cv2.resize(imgWarpColored, (widthImg, heightImg))
+    ###setting brightness and threshold parameters
+    cap.set(10, 160)
 
-        # APPLY ADAPTIVE THRESHOLD
-        imgWarpGray = cv2.cvtColor(imgWarpColored, cv2.COLOR_BGR2GRAY)
-        imgAdaptiveThre = cv2.adaptiveThreshold(imgWarpGray, 255, 1, 1, 7, 2)
-        imgAdaptiveThre = cv2.bitwise_not(imgAdaptiveThre)
-        imgAdaptiveThre = cv2.medianBlur(imgAdaptiveThre, 3)
+    ###Image heights and widths f
+    ##these heights and widths are taken from the reissued immunization cards
+    ##Measurements indicate on average the cards have a height of 160 mm and a width of 110 mm
+    heightImg = 1650
+    widthImg = 1100
+    ########################################################################
 
-        # Image Array for Display
-        imageArray = ([img,  imgContours, imgBigContour,imgAdaptiveThre])
+    utils.initializeTrackbars()
+    count = 0
+    rawimage=pathImage
+    while True:
+        ### setting webcam feed or still image feed from
+        if webCamFeed:
+            success, img = cap.read()
+        else:
+            img = rawimage
 
-    else:
-        imageArray = ([img, imgGray, imgThreshold, imgContours])
+        ###general image preprocessing:
+        thres = utils.valTrackbars()  # call trackbar values for adjusting thresholds
+        
+        with img as image:
+            img=image.resize((1100,1650))  # resizing images
+        imgBlank = np.zeros((heightImg, widthImg, 3), np.uint8)  # CREATE A BLANK IMAGE FOR TESTING DEBUGING IF REQUIRED
+        imgGray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)  # CONVERT IMAGE TO GRAY SCALE
+        imgBlur = cv2.GaussianBlur(imgGray, (thres[2],thres[2]), 1)  # gaussian blur to get rid of image artifacts like noise
+        imgThreshold = cv2.Canny(imgBlur, thres[0], thres[1])  # APPLY CANNY BLUR
+        kernel = np.ones((5, 5))
+        imgDial = cv2.dilate(imgThreshold, kernel, iterations=2)  # APPLY DILATION
+        imgThreshold = cv2.erode(imgDial, kernel, iterations=1)  # APPLY EROSION
 
-    # LABELS FOR DISPLAY
-    lables = [["Original", "Gray", "Threshold", "Contours"]]
+        ## find all the contours of the image
+        imgContours = img.copy()  # COPY IMAGE FOR DISPLAY PURPOSES
+        imgBigContour = img.copy()  # COPY IMAGE FOR DISPLAY PURPOSES
+        contours, hierarchy = cv2.findContours(imgThreshold, cv2.RETR_EXTERNAL,
+                                               cv2.CHAIN_APPROX_SIMPLE)  # FIND ALL CONTOURS
+        cv2.drawContours(imgContours, contours, -1, (0, 255, 0), 10)  # DRAW ALL DETECTED CONTOURS
 
-    stackedImage = utlis.stackImages(imageArray, 0.75)
-    cv2.imshow("Result", stackedImage)
+        # find the largest contour on the image (this will be the item closest to the camera which is the card)
+        biggest, maxArea = utils.biggestContour(contours)  # FIND THE BIGGEST CONTOUR
+        if biggest.size != 0:
+            biggest = utils.reorder(biggest)
+            cv2.drawContours(imgBigContour, biggest, -1, (0, 255, 0), 20)  # DRAW THE BIGGEST CONTOUR
+            imgBigContour = utils.drawRectangle(imgBigContour, biggest, 2)
+            pts1 = np.float32(biggest)  # PREPARE POINTS FOR WARP
+            pts2 = np.float32([[0, 0], [widthImg, 0], [0, heightImg], [widthImg, heightImg]])  # PREPARE POINTS FOR WARP
+            matrix = cv2.getPerspectiveTransform(pts1, pts2)
+            imgWarpColored = cv2.warpPerspective(img, matrix, (widthImg, heightImg))
 
-    # SAVE IMAGE WHEN 's' key is pressed
-    if cv2.waitKey(1) & 0xFF == ord('s'):
-        cv2.imwrite("Scanned/myImage" + str(count) + ".jpg", imgWarpColored)
-        cv2.rectangle(stackedImage, ((int(stackedImage.shape[1] / 2) - 230), int(stackedImage.shape[0] / 2) + 50),
-                      (1100, 350), (0, 255, 0), cv2.FILLED)
-        cv2.putText(stackedImage, "Scan Saved", (int(stackedImage.shape[1] / 2) - 200, int(stackedImage.shape[0] / 2)),
-                    cv2.FONT_HERSHEY_DUPLEX, 3, (0, 0, 255), 5, cv2.LINE_AA)
-        cv2.imshow('Result', stackedImage)
-        cv2.waitKey(300)
-        count += 1
+            # REMOVE 20 PIXELS FORM EACH SIDE
+            imgWarpColored = imgWarpColored[20:imgWarpColored.shape[0] - 20, 20:imgWarpColored.shape[1] - 20]
+            imgWarpColored = cv2.resize(imgWarpColored, (widthImg, heightImg))
+            imgAdaptiveThre = 0
+            # APPLY ADAPTIVE THRESHOLD
+            imgWarpGray = cv2.cvtColor(imgWarpColored, cv2.COLOR_BGR2GRAY)
+            imgAdaptiveThre = cv2.adaptiveThreshold(imgWarpGray, 255, 1, 1, 7, 2)
+            imgAdaptiveThre = cv2.bitwise_not(imgAdaptiveThre)
+            imgAdaptiveThre = cv2.medianBlur(imgAdaptiveThre, 3)
+
+            # Image Array for Display
+            imageArray = ([img, imgContours, imgBigContour, imgAdaptiveThre])
+
+        else:
+            imageArray = ([img, imgGray, imgThreshold, imgContours])
+
+        # LABELS FOR DISPLAY
+        labels = [["Original", "Gray", "Threshold", "Contours"]]
+
+        # Final image variable to be parsed
+        processed_img = imgAdaptiveThre
+
+        # Display image processes
+        stackedImage = utils.stackImages(imageArray, 0.75)
+        #cv2.imshow("Result", stackedImage)
+        cv2.imshow("Result", imgWarpColored)
+        cv2.imwrite('savedimage.png', imgWarpColored)
+
+        # SAVE IMAGE WHEN 's' key is pressed
+        if cv2.waitKey(1) & 0xFF == ord('s'):
+            cv2.imwrite("Scanned/myImage" + str(count) + ".jpg", imgWarpColored)
+            cv2.rectangle(stackedImage, ((int(stackedImage.shape[1] / 2) - 230), int(stackedImage.shape[0] / 2) + 50),
+                          (1100, 350), (0, 255, 0), cv2.FILLED)
+            cv2.putText(stackedImage, "Scan Saved", (int(stackedImage.shape[1] / 2) - 200, int(stackedImage.shape[0] / 2)),
+                        cv2.FONT_HERSHEY_DUPLEX, 3, (0, 0, 255), 5, cv2.LINE_AA)
+            cv2.imshow('Result', stackedImage)
+            cv2.waitKey(300)
+            count +=1
+        processed_img.display()
+        return(processed_img)
+        
