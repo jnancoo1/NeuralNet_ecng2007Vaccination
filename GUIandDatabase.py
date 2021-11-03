@@ -116,6 +116,8 @@ KV = '''
                     helper_text: "Day"
                     helper_text_mode: "persistent"
         
+                #Label:
+        
             BoxLayout:
                 orientation: "horizontal"
                 spacing: 7
@@ -201,7 +203,6 @@ KV = '''
             MDFloatingActionButton:
                 icon: "camera"
                 pos_hint: {"center_x" : 0.5}
-                size_hint_y: 0.1
                 on_release: root.capture()
     
     MDScreen:
@@ -222,7 +223,7 @@ KV = '''
                 on_release: root.refresh()
                 halign: "center" 
                 pos_hint: {"center_x": 0.5}
-                size_hint_y: 0.1
+                size_hint: None, 0.1
 '''
 ####
 Builder.load_string(KV) ### Loads the KV code ###
@@ -401,7 +402,7 @@ class MyLayout(ScreenManager):
             temp = False
         else:
             temp = True
-            
+
         if temp == False:
             pass
         elif len(day) > 2 or len(month) > 2:
