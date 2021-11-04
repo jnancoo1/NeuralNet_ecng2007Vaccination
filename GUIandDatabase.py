@@ -306,7 +306,7 @@ class MyLayout(ScreenManager):
 ### Function for Camera button to capture image ###
     def capture(self):
         camera = self.ids.camera_id
-        camera.export_to_png("./imgcapture.jpg")
+        camera.export_to_png("imgcapture.jpg")
         print("image taken")
 ###
 ### Function for refreshing the database list
