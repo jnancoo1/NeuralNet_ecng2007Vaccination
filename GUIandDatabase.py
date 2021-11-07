@@ -397,7 +397,7 @@ class MyLayout(ScreenManager):
         if temp == False:
             pass
         elif int(year) > 2009 or int(year) < 1921 or len(year) > 4:
-            toast("Invalid Date of Birth, Age out of Range")
+            toast("Invalid Date of Birth")
             self.ids.year.text = ""
             temp = False
         else:
