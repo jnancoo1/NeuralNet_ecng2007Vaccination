@@ -1,5 +1,10 @@
-path=r"C:\Users\jnanc\Downloads\Vacc_Card.jpeg"
-Card=Image.open(path)
+import cv2
+from PIL import Image                                                                                
+ 
+
+def Card_Cover():
+    path=r"C:\Users\jnanc\Downloads\Vacc_Card.png"
+    Card=Image.open(path)
     #Card.show()
 
     with Image.open(path) as image:
@@ -16,19 +21,19 @@ Card=Image.open(path)
         
         Name_Box=(200,700,950,750)
         name=image.crop(Name_Box)
-        name.show()
+#        name.show()
         
         Address_box=(215,750,950,900)
         address=image.crop(Address_box)
-        address.show()
+#        address.show()
     
         Dob_box=(300,980,750,1050)
         Dob=image.crop(Dob_box)    
-        Dob.show()
+#        Dob.show()
         
         gender_box=(850,980,1000,1050)
         gender=image.crop(gender_box)
-        gender.show()
+#        gender.show()
         
         
         images=[name,address,gender,Dob]
