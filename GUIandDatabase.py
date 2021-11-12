@@ -493,7 +493,7 @@ class MyLayout(ScreenManager):
             test_k = (f_name, m_name, s_name, str(year+"/0"+month+"/0"+day), gender_id, site, vac_type)
             dob = str(year+"/0"+month+"/0"+day)
         ###
-        ### Opens Confirmation Dialog.
+        ### Closes Confirmation Dialog.
         self.dialog2.dismiss()
         ###
         ### Function to check if first name, middle initial, surname and date of birth already exist
