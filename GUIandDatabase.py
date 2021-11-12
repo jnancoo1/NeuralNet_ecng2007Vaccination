@@ -48,7 +48,7 @@ KV = '''
             spacing: 7
         
             MDToolbar:
-                title: "AppName"
+                title: "VaxScan"
                 # md_bg_color: app.theme_cls.primary_color
                 left_action_items: [["trash-can", lambda x: root.clear_button_dialog()]]
                 right_action_items: [["database-arrow-right", lambda x: root.data_button("data_screen")]]
