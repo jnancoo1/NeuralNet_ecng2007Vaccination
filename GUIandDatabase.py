@@ -31,7 +31,6 @@ dbcursor.execute("""CREATE TABLE IF NOT EXISTS Persons (
         )
             """)
 ###
-#dbcursor.execute("DROP TABLE Persons") ### Function to clear table if needed
 
 Window.size = (412, 732) ### Function to change window size for testing, must take out when implenting as apk
 
