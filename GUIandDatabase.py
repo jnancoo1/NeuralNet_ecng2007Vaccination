@@ -1,18 +1,28 @@
 # Libraries to pip install: kivy, kivymd and opencv
 from kivy.lang import Builder
-from kivy.uix.boxlayout import BoxLayout
 from kivymd.app import MDApp
 from kivymd.uix.list import ThreeLineAvatarListItem, ImageLeftWidget
 from kivymd.uix.menu import MDDropdownMenu
 from kivy.core.window import Window
 from kivymd.toast import toast
-from kivy.uix.screenmanager import Screen, ScreenManager
+from kivy.uix.screenmanager import ScreenManager
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.button import MDFlatButton, MDRectangleFlatButton
 import sqlite3
 
 ### Formating variables for database functions
-sqliteform = "INSERT INTO Persons (First_Name, Middle_Initial, Surname, Date_Of_Birth, Gender, Site, VacType) VALUES (?,?,?,?,?,?,?)"
+sqliteform = "INSERT INTO Persons (First_Name, Middle_Initial, Surname, Date_Of_Birth, Gender, Site, VacType, QR) VALUES (?,?,?,?,?,?,?,?)"
+###
+### Function to convert image to binary format to store in database (for qr code)
+def image_to_bin(image):
+    with open(image, 'rb') as file:
+      image_data = file.read()
+    return image_data
+###
+### Function to write binary image to a specific path for image
+def bin_to_image(data, filename):
+    with open(filename, 'wb') as file:
+        file.write(data)
 ####
 ### Conecting and creating a DB if it does not exist. Also Creating a table if it does not exist
 conn = sqlite3.connect("app.db")
@@ -22,11 +32,12 @@ dbcursor.execute("""CREATE TABLE IF NOT EXISTS Persons (
     First_Name TEXT NOT NULL,
     Middle_Initial TEXT NOT NULL
         CHECK(length(Middle_Initial)=1),
-    Surname TEXT,
-    Date_Of_Birth TEXT,
+    Surname TEXT NOT NULL,
+    Date_Of_Birth TEXT NOT NULL,
     Gender TEXT CHECK (Gender IN ("M", "F")),
-    Site TEXT,
-    VacType TEXT CHECK (VacType IN ("ASTRAZENICA", "SINOPHARM", "PFIZER", "SINOPHARM", "JOHNSON & JOHNSON"))
+    Site TEXT NOT NULL,
+    VacType TEXT CHECK (VacType IN ("ASTRAZENICA", "SINOPHARM", "PFIZER", "SINOPHARM", "JOHNSON & JOHNSON")),
+    QR BLOB NOT NULL
         )
             """)
 ###
@@ -184,8 +195,8 @@ KV = '''
         name: "camera_screen"
         BoxLayout:
             orientation: "vertical"
-            padding: 10
-            spacing: 0
+            padding: 7
+            spacing: 5
             size: self.size
             MDToolbar:
                 title: "Scan Vaccination Card"
@@ -197,7 +208,7 @@ KV = '''
                 play: True
             BoxLayout:
                 orientation: "horizontal"
-                spacing: 120
+                spacing: 130
                 size_hint: 1, 0.1
                 MDFillRoundFlatIconButton:
                     icon: "camera-account"
@@ -232,7 +243,6 @@ KV = '''
 '''
 ####
 Builder.load_string(KV)  ### Loads the KV code ###
-
 
 class MyLayout(ScreenManager):
 
@@ -344,7 +354,9 @@ class MyLayout(ScreenManager):
         ###
         ### Loops through variable and picks out the specific data in a specific order
         for record in records:
-            image = ImageLeftWidget(source = "pic.png")
+            image_path = str(record[0]) + ".jpg"
+            bin_to_image(record[8], image_path)
+            image = ImageLeftWidget(source = image_path)
             items = ThreeLineAvatarListItem(text=f'{record[0]}. {record[1]} {record[2]} {record[3]}',
                                         secondary_text=f'{record[5]}  {record[4]}',
                                         tertiary_text=f'{record[6]} {record[7]}',
@@ -491,12 +503,10 @@ class MyLayout(ScreenManager):
             pass
         else:
             self.dialog2.open()
-
     ###
     ### Cancel submission function
     def cancel_confirm(self, obj):
         self.dialog2.dismiss()
-
     ###
     ### Confirm submission function
     def submit_confirm(self, obj):
@@ -510,22 +520,23 @@ class MyLayout(ScreenManager):
         site = self.ids.site.text
         gender_id = self.ids.gender_id.text.upper()
         vac_type = self.ids.vac_type.text.upper()
+        qr = image_to_bin("QR.jpg")
         ###
         ### Variables to format for proper execution of writing to database function
-        test_k = (f_name, m_name, s_name, str(year + "/" + month + "/" + day), gender_id, site, vac_type)
+        test_k = (f_name, m_name, s_name, str(year + "/" + month + "/" + day), gender_id, site, vac_type, qr)
         dob = str(year + "/" + month + "/" + day)
         ###
         ### If Statements to format birthdates and months correctly if user enters values less than 10
         if (int(day) < 10 and int(month) > 10 and len(day) < 2) or (
                 int(day) < 10 and int(month) < 10 and len(day) < 2 and len(month) == 2):
-            test_k = (f_name, m_name, s_name, str(year + "/" + month + "/0" + day), gender_id, site, vac_type)
+            test_k = (f_name, m_name, s_name, str(year + "/" + month + "/0" + day), gender_id, site, vac_type, qr)
             dob = str(year + "/" + month + "/0" + day)
         elif (int(month) < 10 and int(day) > 10 and len(month) < 2) or (
                 int(day) < 10 and int(month) < 10 and len(month) < 2 and len(day) == 2):
-            test_k = (f_name, m_name, s_name, str(year + "/0" + month + "/" + day), gender_id, site, vac_type)
+            test_k = (f_name, m_name, s_name, str(year + "/0" + month + "/" + day), gender_id, site, vac_type, qr)
             dob = str(year + "/0" + month + "/" + day)
         elif int(day) < 10 and int(month) < 10 and len(day) < 2 and len(month) < 2:
-            test_k = (f_name, m_name, s_name, str(year + "/0" + month + "/0" + day), gender_id, site, vac_type)
+            test_k = (f_name, m_name, s_name, str(year + "/0" + month + "/0" + day), gender_id, site, vac_type, qr)
             dob = str(year + "/0" + month + "/0" + day)
         ###
         ### Opens Confirmation Dialog.
